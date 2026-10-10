@@ -27,6 +27,21 @@ def order_label(order: Order) -> str:
     return f"Mesa {order.table.number if order.table else order.table_id}"
 
 
+def _recompute_status(order: Order) -> None:
+    """Estado del pedido según sus items, para que el mozo vea qué hay listo para llevar."""
+    items = [i for i in order.items if i.status != "cancelled"]
+    if not items:
+        return
+    in_kitchen = any(i.status in ("pending", "preparing") for i in items)
+    any_ready = any(i.status == "ready" for i in items)
+    if in_kitchen:
+        order.status = "partially_ready" if any_ready else "sent_to_kitchen"
+    elif any_ready:
+        order.status = "ready"
+    else:
+        order.status = "delivered"
+
+
 async def _get_menu_item(db: AsyncSession, item_id: int) -> MenuItem:
     result = await db.execute(
         select(MenuItem).where(MenuItem.id == item_id).options(selectinload(MenuItem.category))
@@ -229,16 +244,18 @@ async def update_item_status(
     if data.status == "ready":
         target.ready_at = datetime.utcnow()
 
-    all_ready = all(i.status in ("ready", "delivered", "cancelled") for i in order.items)
-    if all_ready:
-        order.status = "ready"
-
+    _recompute_status(order)
+    label = order_label(order)
     await db.commit()
 
     await manager.broadcast_to_waiters({
         "event": "item_status",
         "order_id": str(order.id),
+        "order_type": order.order_type,
+        "label": label,
         "item_id": str(item_id),
+        "item_name": target.menu_item_name,
+        "quantity": target.quantity,
         "status": data.status,
     })
 
@@ -252,10 +269,13 @@ async def deliver_order(
     _: User = Depends(require_role(*ORDER_ROLES)),
 ):
     order = await _get_order_with_items(order_id, db)
-    for item in order.items:
-        if item.status == "ready":
-            item.status = "delivered"
-    order.status = "delivered"
+    ready_items = [i for i in order.items if i.status == "ready"]
+    if not ready_items:
+        raise HTTPException(status_code=400, detail="No hay items listos para entregar")
+    # Solo se entrega lo que está listo; lo que sigue en cocina mantiene su estado
+    for item in ready_items:
+        item.status = "delivered"
+    _recompute_status(order)
     await db.commit()
     return await _get_order_with_items(order_id, db)
 

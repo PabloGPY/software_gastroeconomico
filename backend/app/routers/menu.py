@@ -15,6 +15,14 @@ from app.models.user import User
 router = APIRouter(prefix="/menu", tags=["Menu"])
 
 
+async def _get_category_with_items(db: AsyncSession, category_id: int) -> MenuCategory:
+    # Carga explícita de items: con sesión async no se puede hacer lazy-load al serializar
+    result = await db.execute(
+        select(MenuCategory).where(MenuCategory.id == category_id).options(selectinload(MenuCategory.items))
+    )
+    return result.scalar_one()
+
+
 @router.get("/categories", response_model=list[CategoryOut])
 async def list_categories(
     db: AsyncSession = Depends(get_db),
@@ -35,8 +43,7 @@ async def create_category(data: CategoryCreate, db: AsyncSession = Depends(get_d
     category = MenuCategory(**data.model_dump())
     db.add(category)
     await db.commit()
-    await db.refresh(category)
-    return category
+    return await _get_category_with_items(db, category.id)
 
 
 @router.put("/categories/{category_id}", response_model=CategoryOut,
@@ -49,8 +56,7 @@ async def update_category(category_id: int, data: CategoryUpdate, db: AsyncSessi
     for field, value in data.model_dump(exclude_none=True).items():
         setattr(category, field, value)
     await db.commit()
-    await db.refresh(category)
-    return category
+    return await _get_category_with_items(db, category_id)
 
 
 @router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT,

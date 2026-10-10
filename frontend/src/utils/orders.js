@@ -46,7 +46,14 @@ export function orderTotal(order) {
   return orderSubtotal(order) + parseFloat(order?.delivery_fee || 0);
 }
 
-export const money = (n) => `$${parseFloat(n || 0).toFixed(2)}`;
+// Guaraníes: sin decimales y con punto como separador de miles (Gs. 45.000)
+export function formatNumber(n) {
+  const value = Math.round(parseFloat(n) || 0);
+  const digits = Math.abs(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return value < 0 ? `-${digits}` : digits;
+}
+
+export const money = (n) => `Gs. ${formatNumber(n)}`;
 
 // El backend guarda UTC y a veces lo devuelve sin zona horaria: sin la "Z"
 // el navegador lo interpretaría como hora local (3 h de diferencia en Argentina).
@@ -56,3 +63,5 @@ export function parseServerDate(value) {
 }
 
 export const minutesSince = (value) => Math.max(0, Math.floor((Date.now() - parseServerDate(value)) / 60000));
+
+export const readyItems = (order) => (order?.items || []).filter((i) => i.status === "ready");

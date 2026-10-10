@@ -36,12 +36,12 @@ MENU = [
         "sort_order": 1,
         "allows_halves": True,
         "items": [
-            {"name": "Muzzarella", "price": 3200, "cost": 1100, "description": "Grande, 8 porciones"},
-            {"name": "Napolitana", "price": 3600, "cost": 1300, "description": "Muzza, tomate en rodajas, ajo y perejil"},
-            {"name": "Fugazzeta", "price": 3700, "cost": 1300, "description": "Muzza y cebolla"},
-            {"name": "Jamón y morrones", "price": 3900, "cost": 1500, "description": "Muzza, jamón cocido y morrones asados"},
-            {"name": "Calabresa", "price": 3900, "cost": 1500, "description": "Muzza y longaniza calabresa"},
-            {"name": "Especial", "price": 4100, "cost": 1600, "description": "Jamón, morrones, huevo y aceitunas"},
+            {"name": "Muzzarella", "price": 55000, "cost": 20000, "description": "Grande, 8 porciones"},
+            {"name": "Napolitana", "price": 60000, "cost": 22000, "description": "Muzza, tomate en rodajas, ajo y perejil"},
+            {"name": "Fugazzeta", "price": 60000, "cost": 22000, "description": "Muzza y cebolla"},
+            {"name": "Jamón y morrones", "price": 65000, "cost": 25000, "description": "Muzza, jamón cocido y morrones asados"},
+            {"name": "Calabresa", "price": 65000, "cost": 25000, "description": "Muzza y longaniza calabresa"},
+            {"name": "Especial", "price": 70000, "cost": 27000, "description": "Jamón, morrones, huevo y aceitunas"},
         ]
     },
     {
@@ -49,46 +49,46 @@ MENU = [
         "sort_order": 2,
         "allows_halves": True,
         "items": [
-            {"name": "Cuatro quesos", "price": 4500, "cost": 1900, "description": "Muzza, roquefort, provolone y parmesano"},
-            {"name": "Rúcula y crudo", "price": 4800, "cost": 2100, "description": "Jamón crudo, rúcula y parmesano"},
-            {"name": "Fooders", "price": 4900, "cost": 2000, "description": "La de la casa: panceta, cheddar, cebolla caramelizada"},
+            {"name": "Cuatro quesos", "price": 75000, "cost": 30000, "description": "Muzza, roquefort, provolone y parmesano"},
+            {"name": "Rúcula y crudo", "price": 80000, "cost": 33000, "description": "Jamón crudo, rúcula y parmesano"},
+            {"name": "Fooders", "price": 85000, "cost": 34000, "description": "La de la casa: panceta, cheddar, cebolla caramelizada"},
         ]
     },
     {
         "category": "Empanadas",
         "sort_order": 3,
         "items": [
-            {"name": "Empanada de carne", "price": 500, "cost": 200, "description": "Carne cortada a cuchillo"},
-            {"name": "Empanada de jamón y queso", "price": 500, "cost": 200, "description": None},
-            {"name": "Empanada de humita", "price": 500, "cost": 180, "description": None},
-            {"name": "Docena de empanadas", "price": 5400, "cost": 2200, "description": "12 a elección, aclarar gustos en la nota"},
+            {"name": "Empanada de carne", "price": 7000, "cost": 2800, "description": "Carne cortada a cuchillo"},
+            {"name": "Empanada de jamón y queso", "price": 7000, "cost": 2800, "description": None},
+            {"name": "Empanada de humita", "price": 7000, "cost": 2500, "description": None},
+            {"name": "Docena de empanadas", "price": 75000, "cost": 30000, "description": "12 a elección, aclarar gustos en la nota"},
         ]
     },
     {
         "category": "Fainá y extras",
         "sort_order": 4,
         "items": [
-            {"name": "Fainá", "price": 900, "cost": 250, "description": "Porción para acompañar"},
-            {"name": "Papas fritas", "price": 1500, "cost": 500, "description": None},
+            {"name": "Fainá", "price": 10000, "cost": 3000, "description": "Porción para acompañar"},
+            {"name": "Papas fritas", "price": 20000, "cost": 7000, "description": None},
         ]
     },
     {
         "category": "Bebidas",
         "sort_order": 5,
         "items": [
-            {"name": "Agua mineral", "price": 600, "cost": 150, "description": "500ml"},
-            {"name": "Gaseosa", "price": 800, "cost": 200, "description": "Lata 350ml"},
-            {"name": "Gaseosa 1.5L", "price": 1600, "cost": 600, "description": "Ideal para llevar"},
-            {"name": "Cerveza artesanal", "price": 1400, "cost": 400, "description": "Pinta 500ml"},
-            {"name": "Cerveza 1L", "price": 2000, "cost": 900, "description": "Porrón litro"},
+            {"name": "Agua mineral", "price": 6000, "cost": 2000, "description": "500ml"},
+            {"name": "Gaseosa", "price": 8000, "cost": 3000, "description": "Lata 350ml"},
+            {"name": "Gaseosa 1.5L", "price": 15000, "cost": 7000, "description": "Ideal para llevar"},
+            {"name": "Cerveza artesanal", "price": 20000, "cost": 8000, "description": "Pinta 500ml"},
+            {"name": "Cerveza 1L", "price": 22000, "cost": 10000, "description": "Porrón litro"},
         ]
     },
     {
         "category": "Postres",
         "sort_order": 6,
         "items": [
-            {"name": "Flan con dulce", "price": 1200, "cost": 350, "description": "Flan con dulce de leche"},
-            {"name": "Helado (3 bochas)", "price": 1400, "cost": 400, "description": "Varios gustos"},
+            {"name": "Flan con dulce", "price": 12000, "cost": 4000, "description": "Flan con dulce de leche"},
+            {"name": "Helado (3 bochas)", "price": 15000, "cost": 5000, "description": "Varios gustos"},
         ]
     },
 ]

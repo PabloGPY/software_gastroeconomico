@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getActiveOrders, createOrder, sendToKitchen, deliverOrder, cancelOrder } from "../../api/orders";
 import AppLayout from "../../components/layout/AppLayout";
 import OrderBuilder from "../../components/orders/OrderBuilder";
-import { ORDER_STATUS_LABELS, minutesSince, money, orderTotal } from "../../utils/orders";
+import { ORDER_STATUS_LABELS, minutesSince, money, orderTotal, readyItems } from "../../utils/orders";
 import toast from "react-hot-toast";
 import { ShoppingBag, Bike, Phone, MapPin, Clock, CheckCircle, CreditCard, X } from "lucide-react";
 
@@ -37,7 +37,7 @@ function CustomerForm({ orderType, setOrderType, customer, setCustomer }) {
       {orderType === "delivery" && (
         <>
           <input placeholder="Dirección de entrega *" {...field("delivery_address")} />
-          <input placeholder="Costo de envío ($)" type="number" min="0" {...field("delivery_fee")} />
+          <input placeholder="Costo de envío (Gs.)" type="number" min="0" step="1" {...field("delivery_fee")} />
         </>
       )}
     </>
@@ -47,7 +47,7 @@ function CustomerForm({ orderType, setOrderType, customer, setCustomer }) {
 function ActiveOrderCard({ order, onDeliver, onCancel, onCharge }) {
   const minutesAgo = minutesSince(order.created_at);
   const isDelivery = order.order_type === "delivery";
-  const ready = order.status === "ready";
+  const ready = readyItems(order).length > 0;
 
   return (
     <div className={`bg-white rounded-xl border shadow-sm p-4 ${ready ? "border-green-400" : "border-gray-100"}`}>

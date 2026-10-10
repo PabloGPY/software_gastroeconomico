@@ -3,10 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getTables, createTable, updateTable, updateTableStatus, deleteTable } from "../../api/tables";
 import { getActiveOrders } from "../../api/orders";
+import { readyItems } from "../../utils/orders";
 import AppLayout from "../../components/layout/AppLayout";
 import { useAuth } from "../../contexts/AuthContext";
 import toast from "react-hot-toast";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Sparkles } from "lucide-react";
 
 const STATUS_COLORS = {
   available: "bg-green-400 hover:bg-green-500",
@@ -22,7 +23,7 @@ const STATUS_LABELS = {
   cleaning: "Limpieza",
 };
 
-function TableCard({ table, orderCount, isAdmin, onClick }) {
+function TableCard({ table, orderCount, hasReady, isAdmin, onClick }) {
   return (
     <div
       className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer"
@@ -30,7 +31,7 @@ function TableCard({ table, orderCount, isAdmin, onClick }) {
       onClick={() => onClick(table)}
     >
       <div
-        className={`${STATUS_COLORS[table.status]} rounded-xl shadow-md transition-all w-20 h-20 flex flex-col items-center justify-center text-white font-bold select-none`}
+        className={`${STATUS_COLORS[table.status]} ${hasReady ? "ring-4 ring-green-400 ring-offset-2 animate-pulse" : ""} rounded-xl shadow-md transition-all w-20 h-20 flex flex-col items-center justify-center text-white font-bold select-none`}
       >
         <span className="text-lg">{table.number}</span>
         <span className="text-xs opacity-80">{table.capacity}p</span>
@@ -38,7 +39,9 @@ function TableCard({ table, orderCount, isAdmin, onClick }) {
           <span className="text-xs bg-white text-gray-800 rounded-full px-1">{orderCount} p.</span>
         )}
       </div>
-      <p className="text-center text-xs text-gray-500 mt-1">{STATUS_LABELS[table.status]}</p>
+      <p className={`text-center text-xs mt-1 ${hasReady ? "text-green-600 font-bold" : "text-gray-500"}`}>
+        {hasReady ? "¡Listo!" : STATUS_LABELS[table.status]}
+      </p>
     </div>
   );
 }
@@ -61,6 +64,14 @@ function TableModal({ table, orderForTable, onClose, onStatusChange, onGoToOrder
           {orderForTable && <p>Items en pedido: {orderForTable.items.length}</p>}
         </div>
         <div className="flex flex-col gap-2">
+          {table.status === "cleaning" && (
+            <button
+              onClick={() => onStatusChange(table, "available")}
+              className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg text-sm font-semibold"
+            >
+              <Sparkles size={16} /> Limpieza terminada — dejar libre
+            </button>
+          )}
           {(user.role === "waiter" || user.role === "admin") && (
             <button
               onClick={() => onGoToOrder(table)}
@@ -77,7 +88,7 @@ function TableModal({ table, orderForTable, onClose, onStatusChange, onGoToOrder
               Cobrar mesa
             </button>
           )}
-          {(user.role === "admin" || user.role === "waiter") && (
+          {table.status !== "cleaning" && !orderForTable && (
             <button
               onClick={() => onStatusChange(table, "cleaning")}
               className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded-lg text-sm"
@@ -85,13 +96,19 @@ function TableModal({ table, orderForTable, onClose, onStatusChange, onGoToOrder
               Marcar para limpieza
             </button>
           )}
-          {user.role === "admin" && (
+          {/* Liberar a mano una mesa ocupada/reservada; con pedido abierto hay que cobrarlo o cancelarlo antes */}
+          {["occupied", "reserved"].includes(table.status) && !orderForTable && (
             <button
               onClick={() => onStatusChange(table, "available")}
               className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded-lg text-sm"
             >
               Marcar disponible
             </button>
+          )}
+          {orderForTable && table.status !== "cleaning" && (
+            <p className="text-xs text-gray-400 text-center">
+              Tiene un pedido abierto: se libera al cobrarlo.
+            </p>
           )}
         </div>
       </div>
@@ -207,6 +224,7 @@ export default function FloorMapPage() {
               key={table.id}
               table={table}
               orderCount={orderByTable(table.id)?.items.length || 0}
+              hasReady={readyItems(orderByTable(table.id)).length > 0}
               isAdmin={user.role === "admin"}
               onClick={setSelectedTable}
             />

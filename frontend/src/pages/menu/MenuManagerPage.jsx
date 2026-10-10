@@ -1,12 +1,59 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCategories, updateCategory, createItem, updateItem, deleteItem, toggleAvailability } from "../../api/menu";
+import {
+  getCategories, createCategory, updateCategory, deleteCategory,
+  createItem, updateItem, deleteItem, toggleAvailability,
+} from "../../api/menu";
 import AppLayout from "../../components/layout/AppLayout";
+import { money } from "../../utils/orders";
 import toast from "react-hot-toast";
-import { Plus, Edit, Trash2, X, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit, Trash2, X, Eye, EyeOff, FolderPlus } from "lucide-react";
 
-function ItemForm({ item, categories, onSave, onCancel }) {
-  const [form, setForm] = useState(item || { category_id: categories[0]?.id || "", name: "", description: "", price: "", cost: "", sort_order: 0 });
+function CategoryForm({ category, nextSortOrder, onSave, onCancel }) {
+  const [form, setForm] = useState(category
+    ? { name: category.name, sort_order: category.sort_order, allows_halves: category.allows_halves }
+    : { name: "", sort_order: nextSortOrder, allows_halves: false });
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+        <div className="flex justify-between mb-4">
+          <h3 className="font-bold text-lg">{category ? "Editar" : "Nueva"} categoría</h3>
+          <button onClick={onCancel}><X size={20} className="text-gray-400" /></button>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Nombre</label>
+            <input autoFocus placeholder="Ej: Hamburguesas, Tragos" value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full border rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Posición (orden de las solapas al tomar pedidos)</label>
+            <input type="number" min="0" value={form.sort_order}
+              onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })}
+              className="w-full border rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+            <input type="checkbox" checked={form.allows_halves} className="accent-orange-500"
+              onChange={(e) => setForm({ ...form, allows_halves: e.target.checked })} />
+            Permite mitad y mitad (para pizzas)
+          </label>
+        </div>
+        <div className="flex gap-2 mt-4">
+          <button onClick={onCancel} className="flex-1 border border-gray-300 py-2 rounded-lg text-sm">Cancelar</button>
+          <button onClick={() => onSave({ ...form, name: form.name.trim() })} disabled={!form.name.trim()}
+            className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white py-2 rounded-lg text-sm font-medium">
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ItemForm({ item, categories, defaultCategoryId, onSave, onCancel }) {
+  const [form, setForm] = useState(item || { category_id: defaultCategoryId || categories[0]?.id || "", name: "", description: "", price: "", cost: "", sort_order: 0 });
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -28,13 +75,13 @@ function ItemForm({ item, categories, onSave, onCancel }) {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Precio de venta</label>
-              <input type="number" step="0.01" placeholder="0.00" value={form.price}
+              <input type="number" step="1" min="0" placeholder="Gs." value={form.price}
                 onChange={(e) => setForm({ ...form, price: e.target.value })}
                 className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Costo (para rentabilidad)</label>
-              <input type="number" step="0.01" placeholder="0.00" value={form.cost || ""}
+              <input type="number" step="1" min="0" placeholder="Gs." value={form.cost || ""}
                 onChange={(e) => setForm({ ...form, cost: e.target.value })}
                 className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
@@ -56,6 +103,9 @@ export default function MenuManagerPage() {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);
+  const [newItemCategoryId, setNewItemCategoryId] = useState(null);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [editCategory, setEditCategory] = useState(null);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -64,7 +114,7 @@ export default function MenuManagerPage() {
 
   const createMutation = useMutation({
     mutationFn: createItem,
-    onSuccess: () => { qc.invalidateQueries(["categories"]); setShowForm(false); toast.success("Item creado"); },
+    onSuccess: () => { qc.invalidateQueries(["categories"]); setShowForm(false); setNewItemCategoryId(null); toast.success("Item creado"); },
     onError: (err) => toast.error(err.response?.data?.detail || "Error"),
   });
 
@@ -77,6 +127,31 @@ export default function MenuManagerPage() {
     mutationFn: deleteItem,
     onSuccess: () => { qc.invalidateQueries(["categories"]); toast.success("Item eliminado"); },
   });
+
+  const saveCategoryMutation = useMutation({
+    mutationFn: ({ id, data }) => (id ? updateCategory(id, data) : createCategory(data)),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries(["categories"]);
+      setShowCategoryForm(false);
+      setEditCategory(null);
+      toast.success(id ? "Categoría actualizada" : "Categoría creada");
+    },
+    onError: (err) => toast.error(err.response?.data?.detail || "Error al guardar la categoría"),
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: deleteCategory,
+    onSuccess: () => { qc.invalidateQueries(["categories"]); toast.success("Categoría eliminada"); },
+    onError: () => toast.error("Error al eliminar la categoría"),
+  });
+
+  const confirmDeleteCategory = (cat) => {
+    const count = cat.items.filter((i) => i.is_active).length;
+    const warning = count > 0 ? `\n\nSus ${count} items dejarán de aparecer en el menú.` : "";
+    if (window.confirm(`¿Eliminar la categoría "${cat.name}"?${warning}`)) deleteCategoryMutation.mutate(cat.id);
+  };
+
+  const nextSortOrder = categories.reduce((max, c) => Math.max(max, c.sort_order), 0) + 1;
 
   const halvesMutation = useMutation({
     mutationFn: ({ id, allows_halves }) => updateCategory(id, { allows_halves }),
@@ -94,17 +169,37 @@ export default function MenuManagerPage() {
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Gestión del Menú</h2>
-          <button onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-            <Plus size={16} /> Nuevo item
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowCategoryForm(true)}
+              className="flex items-center gap-2 border border-orange-500 text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-lg text-sm font-medium">
+              <FolderPlus size={16} /> Nueva categoría
+            </button>
+            <button onClick={() => setShowForm(true)}
+              className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              <Plus size={16} /> Nuevo item
+            </button>
+          </div>
         </div>
 
         <div className="space-y-6">
           {categories.map((cat) => (
             <div key={cat.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="bg-gray-50 px-5 py-3 border-b flex items-center justify-between">
-                <h3 className="font-semibold text-gray-800">{cat.name}</h3>
+                <div className="flex items-center gap-1">
+                  <h3 className="font-semibold text-gray-800 mr-2">{cat.name}</h3>
+                  <button onClick={() => setNewItemCategoryId(cat.id)} title="Agregar item a esta categoría"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-orange-500 hover:bg-orange-50">
+                    <Plus size={15} />
+                  </button>
+                  <button onClick={() => setEditCategory(cat)} title="Editar categoría"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-orange-500 hover:bg-orange-50">
+                    <Edit size={15} />
+                  </button>
+                  <button onClick={() => confirmDeleteCategory(cat)} title="Eliminar categoría"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50">
+                    <Trash2 size={15} />
+                  </button>
+                </div>
                 <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer select-none"
                   title="Permite combinar dos gustos de esta categoría en una pizza, cobrando la mitad más cara">
                   <input type="checkbox" checked={cat.allows_halves}
@@ -127,8 +222,8 @@ export default function MenuManagerPage() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="font-bold text-orange-500">${parseFloat(item.price).toFixed(2)}</p>
-                        {item.cost && <p className="text-xs text-gray-400">Costo: ${parseFloat(item.cost).toFixed(2)}</p>}
+                        <p className="font-bold text-orange-500">{money(item.price)}</p>
+                        {item.cost && <p className="text-xs text-gray-400">Costo: {money(item.cost)}</p>}
                       </div>
                       <div className="flex gap-1">
                         <button onClick={() => availabilityMutation.mutate({ id: item.id, available: !item.is_available })}
@@ -155,8 +250,19 @@ export default function MenuManagerPage() {
           ))}
         </div>
 
-        {showForm && (
-          <ItemForm categories={categories} onSave={(data) => createMutation.mutate(data)} onCancel={() => setShowForm(false)} />
+        {categories.length === 0 && (
+          <p className="text-gray-400 text-sm text-center py-16">Todavía no hay categorías. Creá una con el botón Nueva categoría.</p>
+        )}
+
+        {(showForm || newItemCategoryId) && (
+          <ItemForm categories={categories} defaultCategoryId={newItemCategoryId}
+            onSave={(data) => createMutation.mutate(data)}
+            onCancel={() => { setShowForm(false); setNewItemCategoryId(null); }} />
+        )}
+        {(showCategoryForm || editCategory) && (
+          <CategoryForm category={editCategory} nextSortOrder={nextSortOrder}
+            onSave={(data) => saveCategoryMutation.mutate({ id: editCategory?.id, data })}
+            onCancel={() => { setShowCategoryForm(false); setEditCategory(null); }} />
         )}
         {editItem && (
           <ItemForm item={editItem} categories={categories}

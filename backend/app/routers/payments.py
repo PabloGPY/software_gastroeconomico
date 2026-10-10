@@ -1,5 +1,5 @@
 import uuid
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -67,7 +67,8 @@ async def process_payment(
         raise HTTPException(status_code=400, detail="El pedido ya fue cobrado")
 
     subtotal = sum(Decimal(str(i.unit_price)) * i.quantity for i in order.items if i.status != "cancelled")
-    discount_amount = subtotal * (data.discount_pct / Decimal("100"))
+    # Guaraníes no tienen decimales: el descuento se redondea a guaraní entero
+    discount_amount = (subtotal * (data.discount_pct / Decimal("100"))).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
     delivery_fee = Decimal(str(order.delivery_fee or 0))
     total = subtotal - discount_amount + data.tip_amount + delivery_fee
     change_given = None

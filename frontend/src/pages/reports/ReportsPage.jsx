@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getSummary, getSales, getBestSellers, getPaymentMethods, getOrderTypes } from "../../api/reports";
-import { ORDER_TYPE_LABELS } from "../../utils/orders";
+import { ORDER_TYPE_LABELS, formatNumber, money } from "../../utils/orders";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import AppLayout from "../../components/layout/AppLayout";
 import { format, startOfMonth, startOfWeek, subDays } from "date-fns";
@@ -59,7 +59,7 @@ export default function ReportsPage() {
   });
   const channelsTotal = orderTypes.reduce((sum, c) => sum + c.total, 0);
 
-  const fmt = (n) => `$${Number(n || 0).toLocaleString("es-AR", { minimumFractionDigits: 0 })}`;
+  const fmt = money;
 
   const salesChartData = sales.map((s) => ({
     name: s.period.substring(0, 10),
@@ -123,8 +123,8 @@ export default function ReportsPage() {
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={salesChartData}>
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(val) => `$${val.toFixed(2)}`} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={formatNumber} width={80} />
+                  <Tooltip formatter={(val) => money(val)} />
                   <Bar dataKey="Ingresos" fill="#f97316" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -141,7 +141,7 @@ export default function ReportsPage() {
                   <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
                     {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(val) => `$${parseFloat(val).toFixed(2)}`} />
+                  <Tooltip formatter={(val) => money(val)} />
                 </PieChart>
               </ResponsiveContainer>
             )}

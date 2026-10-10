@@ -1,5 +1,8 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../contexts/AuthContext";
+import { getActiveOrders } from "../../api/orders";
+import { readyItems } from "../../utils/orders";
 import {
   LayoutDashboard, Utensils, Calendar, ClipboardList,
   ChefHat, CreditCard, TrendingUp, Settings, LogOut, DollarSign, ShoppingBag,
@@ -23,6 +26,19 @@ export default function Sidebar() {
   const navigate = useNavigate();
 
   const links = allLinks.filter((l) => l.roles.includes(user?.role));
+
+  // Contador de pedidos listos para entregar en "Pedidos" (mesas) y "Mostrador" (para llevar/delivery)
+  const { data: activeOrders = [] } = useQuery({
+    queryKey: ["active-orders"],
+    queryFn: () => getActiveOrders().then((r) => r.data),
+    refetchInterval: 15000,
+    enabled: !!user && user.role !== "kitchen",
+  });
+  const readyCount = (pred) => activeOrders.filter((o) => pred(o) && readyItems(o).length > 0).length;
+  const badges = {
+    "/order": readyCount((o) => o.order_type === "dine_in"),
+    "/counter": readyCount((o) => o.order_type !== "dine_in"),
+  };
 
   const handleLogout = () => {
     logout();
@@ -54,6 +70,12 @@ export default function Sidebar() {
           >
             <Icon size={18} />
             {label}
+            {badges[to] > 0 && (
+              <span className="ml-auto bg-green-500 text-white text-xs font-bold rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center"
+                title="Listos para entregar">
+                {badges[to]}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

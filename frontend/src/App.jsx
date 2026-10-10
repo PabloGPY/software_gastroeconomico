@@ -10,6 +10,7 @@ import ReservationsPage from "./pages/tables/ReservationsPage";
 import TableOrderPage from "./pages/orders/TableOrderPage";
 import KitchenDisplayPage from "./pages/orders/KitchenDisplayPage";
 import CounterPage from "./pages/orders/CounterPage";
+import WaiterOrdersPage from "./pages/orders/WaiterOrdersPage";
 import CheckoutPage from "./pages/payments/CheckoutPage";
 import MenuManagerPage from "./pages/menu/MenuManagerPage";
 import ExpensesPage from "./pages/expenses/ExpensesPage";
@@ -55,7 +56,7 @@ export default function App() {
               <ProtectedRoute roles={["admin", "waiter"]}><TableOrderPage /></ProtectedRoute>
             } />
             <Route path="/order" element={
-              <ProtectedRoute roles={["admin", "waiter"]}><FloorMapPage /></ProtectedRoute>
+              <ProtectedRoute roles={["admin", "waiter"]}><WaiterOrdersPage /></ProtectedRoute>
             } />
             <Route path="/counter" element={
               <ProtectedRoute roles={["admin", "waiter", "cashier"]}><CounterPage /></ProtectedRoute>

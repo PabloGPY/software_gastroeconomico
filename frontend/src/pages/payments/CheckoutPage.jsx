@@ -36,24 +36,24 @@ function ReceiptModal({ payment, order, tables, onClose }) {
               </div>
             ))}
           </div>
-          <div className="flex justify-between"><span>Subtotal</span><span>${parseFloat(payment.subtotal).toFixed(2)}</span></div>
+          <div className="flex justify-between"><span>Subtotal</span><span>{money(payment.subtotal)}</span></div>
           {parseFloat(payment.discount_amount) > 0 && (
-            <div className="flex justify-between text-red-500"><span>Descuento ({payment.discount_pct}%)</span><span>-${parseFloat(payment.discount_amount).toFixed(2)}</span></div>
+            <div className="flex justify-between text-red-500"><span>Descuento ({payment.discount_pct}%)</span><span>-{money(payment.discount_amount)}</span></div>
           )}
           {parseFloat(payment.delivery_fee) > 0 && (
             <div className="flex justify-between"><span>Envío</span><span>{money(payment.delivery_fee)}</span></div>
           )}
           {parseFloat(payment.tip_amount) > 0 && (
-            <div className="flex justify-between"><span>Propina</span><span>${parseFloat(payment.tip_amount).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span>Propina</span><span>{money(payment.tip_amount)}</span></div>
           )}
           <div className="flex justify-between font-bold text-base border-t pt-2 mt-2">
-            <span>TOTAL</span><span>${parseFloat(payment.total).toFixed(2)}</span>
+            <span>TOTAL</span><span>{money(payment.total)}</span>
           </div>
           <div className="flex justify-between text-gray-500"><span>Método</span><span>{PAYMENT_METHOD_LABELS[payment.payment_method] || payment.payment_method}</span></div>
           {payment.cash_received && (
             <>
-              <div className="flex justify-between"><span>Efectivo recibido</span><span>${parseFloat(payment.cash_received).toFixed(2)}</span></div>
-              <div className="flex justify-between text-green-600"><span>Vuelto</span><span>${parseFloat(payment.change_given || 0).toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>Efectivo recibido</span><span>{money(payment.cash_received)}</span></div>
+              <div className="flex justify-between text-green-600"><span>Vuelto</span><span>{money(payment.change_given)}</span></div>
             </>
           )}
         </div>
@@ -100,7 +100,7 @@ export default function CheckoutPage() {
 
   const subtotal = orderSubtotal(selectedOrder);
   const deliveryFee = parseFloat(selectedOrder?.delivery_fee || 0);
-  const discountAmount = subtotal * (discountPct / 100);
+  const discountAmount = Math.round(subtotal * (discountPct / 100));
   const total = subtotal - discountAmount + deliveryFee + parseFloat(tipAmount || 0);
   const change = paymentMethod === "cash" && cashReceived ? parseFloat(cashReceived) - total : null;
 
@@ -148,7 +148,7 @@ export default function CheckoutPage() {
                       <p className="font-bold text-gray-900">{orderLabel(order, tables)}</p>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${ORDER_TYPE_COLORS[order.order_type]}`}>{ORDER_TYPE_LABELS[order.order_type]}</span>
                     </div>
-                    <p className="text-sm text-gray-500">{order.items.length} items · ${total.toFixed(2)}</p>
+                    <p className="text-sm text-gray-500">{order.items.length} items · {money(total)}</p>
                     <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${
                       order.status === "ready" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
                     }`}>{ORDER_STATUS_LABELS[order.status] || order.status}</span>
@@ -177,16 +177,16 @@ export default function CheckoutPage() {
                 {selectedOrder.items.filter((i) => i.status !== "cancelled").map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
                     <span className="text-gray-700">{item.quantity}× {item.menu_item_name || `Item #${item.menu_item_id}`}</span>
-                    <span className="text-gray-900 font-medium">${(parseFloat(item.unit_price) * item.quantity).toFixed(2)}</span>
+                    <span className="text-gray-900 font-medium">{money(parseFloat(item.unit_price) * item.quantity)}</span>
                   </div>
                 ))}
               </div>
               <div className="border-t pt-3 space-y-1 text-sm">
-                <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-                {discountAmount > 0 && <div className="flex justify-between text-red-500"><span>Descuento</span><span>-${discountAmount.toFixed(2)}</span></div>}
+                <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{money(subtotal)}</span></div>
+                {discountAmount > 0 && <div className="flex justify-between text-red-500"><span>Descuento</span><span>-{money(discountAmount)}</span></div>}
                 {deliveryFee > 0 && <div className="flex justify-between"><span className="text-gray-500">Envío</span><span>{money(deliveryFee)}</span></div>}
-                {parseFloat(tipAmount) > 0 && <div className="flex justify-between"><span>Propina</span><span>${parseFloat(tipAmount).toFixed(2)}</span></div>}
-                <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span className="text-orange-500">${total.toFixed(2)}</span></div>
+                {parseFloat(tipAmount) > 0 && <div className="flex justify-between"><span>Propina</span><span>{money(tipAmount)}</span></div>}
+                <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span className="text-orange-500">{money(total)}</span></div>
               </div>
             </div>
 
@@ -214,7 +214,7 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Propina ($)</label>
+                  <label className="block text-xs text-gray-500 mb-1">Propina (Gs.)</label>
                   <input type="number" min="0" value={tipAmount}
                     onChange={(e) => setTipAmount(e.target.value)}
                     className="w-full border rounded-lg px-3 py-2 text-sm"
@@ -228,10 +228,10 @@ export default function CheckoutPage() {
                   <input type="number" min="0" value={cashReceived}
                     onChange={(e) => setCashReceived(e.target.value)}
                     className="w-full border rounded-lg px-3 py-2 text-sm"
-                    placeholder="0.00"
+                    placeholder="0"
                   />
                   {change !== null && change >= 0 && (
-                    <p className="text-green-600 text-sm mt-1 font-medium">Vuelto: ${change.toFixed(2)}</p>
+                    <p className="text-green-600 text-sm mt-1 font-medium">Vuelto: {money(change)}</p>
                   )}
                   {change !== null && change < 0 && (
                     <p className="text-red-500 text-sm mt-1">Efectivo insuficiente</p>
@@ -245,7 +245,7 @@ export default function CheckoutPage() {
                 className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white py-3 rounded-xl font-semibold"
               >
                 <CreditCard size={18} />
-                {payMutation.isPending ? "Procesando..." : `Cobrar $${total.toFixed(2)}`}
+                {payMutation.isPending ? "Procesando..." : `Cobrar ${money(total)}`}
               </button>
             </div>
           </div>

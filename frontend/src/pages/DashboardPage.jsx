@@ -3,7 +3,7 @@ import { getSummary } from "../api/reports";
 import { getActiveOrders } from "../api/orders";
 import { format, startOfMonth } from "date-fns";
 import AppLayout from "../components/layout/AppLayout";
-import { ORDER_STATUS_LABELS, orderLabel } from "../utils/orders";
+import { ORDER_STATUS_LABELS, money, orderLabel } from "../utils/orders";
 import { TrendingUp, ShoppingBag, DollarSign, TrendingDown } from "lucide-react";
 
 function KPICard({ label, value, icon: Icon, color }) {
@@ -37,7 +37,7 @@ export default function DashboardPage() {
     refetchInterval: 15000,
   });
 
-  const fmt = (n) => `$${Number(n || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}`;
+  const fmt = money;
 
   return (
     <AppLayout>

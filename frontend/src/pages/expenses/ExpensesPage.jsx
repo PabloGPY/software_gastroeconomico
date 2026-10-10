@@ -5,6 +5,7 @@ import AppLayout from "../../components/layout/AppLayout";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
 import { Plus, Trash2, X } from "lucide-react";
+import { money } from "../../utils/orders";
 
 function ExpenseForm({ onSave, onCancel }) {
   const [form, setForm] = useState({
@@ -33,7 +34,7 @@ function ExpenseForm({ onSave, onCancel }) {
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             className="w-full border rounded-lg px-3 py-2 text-sm"
           />
-          <input type="number" placeholder="Monto" value={form.amount}
+          <input type="number" step="1" min="0" placeholder="Monto (Gs.)" value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
             className="w-full border rounded-lg px-3 py-2 text-sm"
           />
@@ -85,7 +86,7 @@ export default function ExpensesPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Egresos</h2>
-            <p className="text-red-500 font-medium">Total: ${total.toLocaleString("es-AR", { minimumFractionDigits: 2 })}</p>
+            <p className="text-red-500 font-medium">Total: {money(total)}</p>
           </div>
           <button onClick={() => setShowForm(true)}
             className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
@@ -107,7 +108,7 @@ export default function ExpensesPage() {
                 <p className="text-xs text-gray-400 mt-1">{format(new Date(e.expense_date), "dd/MM/yyyy")}</p>
               </div>
               <div className="flex items-center gap-3">
-                <p className="font-bold text-red-500">${parseFloat(e.amount).toFixed(2)}</p>
+                <p className="font-bold text-red-500">{money(e.amount)}</p>
                 <button onClick={() => deleteMutation.mutate(e.id)} className="text-gray-300 hover:text-red-400">
                   <Trash2 size={16} />
                 </button>
