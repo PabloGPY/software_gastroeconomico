@@ -36,6 +36,7 @@ class PaymentOut(BaseModel):
     discount_pct: Decimal
     discount_amount: Decimal
     tip_amount: Decimal
+    delivery_fee: Decimal
     total: Decimal
     payment_method: str
     cash_received: Decimal | None

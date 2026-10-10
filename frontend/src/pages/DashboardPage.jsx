@@ -3,6 +3,7 @@ import { getSummary } from "../api/reports";
 import { getActiveOrders } from "../api/orders";
 import { format, startOfMonth } from "date-fns";
 import AppLayout from "../components/layout/AppLayout";
+import { ORDER_STATUS_LABELS, orderLabel } from "../utils/orders";
 import { TrendingUp, ShoppingBag, DollarSign, TrendingDown } from "lucide-react";
 
 function KPICard({ label, value, icon: Icon, color }) {
@@ -63,13 +64,13 @@ export default function DashboardPage() {
             <div className="space-y-2">
               {activeOrders.map((order) => (
                 <div key={order.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <span className="text-sm text-gray-700">Mesa {order.table_id} — {order.items.length} items</span>
+                  <span className="text-sm text-gray-700">{orderLabel(order)} — {order.items.length} items</span>
                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${
                     order.status === "ready" ? "bg-green-100 text-green-700" :
                     order.status === "sent_to_kitchen" ? "bg-yellow-100 text-yellow-700" :
                     "bg-gray-100 text-gray-600"
                   }`}>
-                    {order.status}
+                    {ORDER_STATUS_LABELS[order.status] || order.status}
                   </span>
                 </div>
               ))}

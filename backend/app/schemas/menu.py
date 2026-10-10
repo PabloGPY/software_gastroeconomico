@@ -5,12 +5,14 @@ from pydantic import BaseModel
 class CategoryCreate(BaseModel):
     name: str
     sort_order: int = 0
+    allows_halves: bool = False
 
 
 class CategoryUpdate(BaseModel):
     name: str | None = None
     sort_order: int | None = None
     is_active: bool | None = None
+    allows_halves: bool | None = None
 
 
 class MenuItemCreate(BaseModel):
@@ -58,6 +60,7 @@ class CategoryOut(BaseModel):
     name: str
     sort_order: int
     is_active: bool
+    allows_halves: bool
     items: list[MenuItemOut] = []
 
     model_config = {"from_attributes": True}

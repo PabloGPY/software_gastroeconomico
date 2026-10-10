@@ -18,6 +18,7 @@ class Payment(Base):
     discount_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0"))
     discount_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0"))
     tip_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0"))
+    delivery_fee: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0"), server_default="0")
     total: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     payment_method: Mapped[str] = mapped_column(
         SAEnum("cash", "card", "transfer", "mixed", name="payment_method"),

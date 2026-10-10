@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   LayoutDashboard, Utensils, Calendar, ClipboardList,
-  ChefHat, CreditCard, TrendingUp, Settings, LogOut, DollarSign,
+  ChefHat, CreditCard, TrendingUp, Settings, LogOut, DollarSign, ShoppingBag,
 } from "lucide-react";
 
 const allLinks = [
@@ -10,6 +10,7 @@ const allLinks = [
   { to: "/floor", label: "Mesas", icon: Utensils, roles: ["admin", "waiter", "cashier"] },
   { to: "/reservations", label: "Reservas", icon: Calendar, roles: ["admin", "waiter", "cashier"] },
   { to: "/order", label: "Pedidos", icon: ClipboardList, roles: ["admin", "waiter"] },
+  { to: "/counter", label: "Mostrador / Delivery", icon: ShoppingBag, roles: ["admin", "waiter", "cashier"] },
   { to: "/kitchen", label: "Cocina", icon: ChefHat, roles: ["admin", "kitchen"] },
   { to: "/checkout", label: "Caja", icon: CreditCard, roles: ["admin", "cashier"] },
   { to: "/expenses", label: "Egresos", icon: DollarSign, roles: ["admin"] },
@@ -29,9 +30,9 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-gray-900 text-white flex flex-col min-h-screen">
-      <div className="p-6 border-b border-gray-700">
-        <h1 className="text-xl font-bold text-orange-400">GastroPOS</h1>
+    <aside className="w-64 bg-black text-white flex flex-col min-h-screen">
+      <div className="p-5 border-b border-gray-800 text-center">
+        <h1><img src="/logo.png" alt="Fooders — Pizzas & Papas" className="w-24 h-24 mx-auto" /></h1>
         <p className="text-xs text-gray-400 mt-1">{user?.full_name}</p>
         <span className="inline-block text-xs bg-orange-700 text-orange-100 px-2 py-0.5 rounded mt-1 capitalize">
           {user?.role === "waiter" ? "Mozo" : user?.role === "cashier" ? "Cajero" : user?.role === "kitchen" ? "Cocina" : "Admin"}
@@ -47,7 +48,7 @@ export default function Sidebar() {
               `flex items-center gap-3 px-6 py-3 text-sm transition-colors ${
                 isActive
                   ? "bg-orange-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  : "text-gray-300 hover:bg-gray-900 hover:text-white"
               }`
             }
           >
@@ -59,7 +60,7 @@ export default function Sidebar() {
 
       <button
         onClick={handleLogout}
-        className="flex items-center gap-3 px-6 py-4 text-sm text-gray-400 hover:text-white hover:bg-gray-800 border-t border-gray-700 transition-colors"
+        className="flex items-center gap-3 px-6 py-4 text-sm text-gray-400 hover:text-white hover:bg-gray-900 border-t border-gray-800 transition-colors"
       >
         <LogOut size={18} />
         Cerrar sesión

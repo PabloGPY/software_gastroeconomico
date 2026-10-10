@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCategories, createItem, updateItem, deleteItem, toggleAvailability } from "../../api/menu";
+import { getCategories, updateCategory, createItem, updateItem, deleteItem, toggleAvailability } from "../../api/menu";
 import AppLayout from "../../components/layout/AppLayout";
 import toast from "react-hot-toast";
 import { Plus, Edit, Trash2, X, Eye, EyeOff } from "lucide-react";
@@ -78,6 +78,12 @@ export default function MenuManagerPage() {
     onSuccess: () => { qc.invalidateQueries(["categories"]); toast.success("Item eliminado"); },
   });
 
+  const halvesMutation = useMutation({
+    mutationFn: ({ id, allows_halves }) => updateCategory(id, { allows_halves }),
+    onSuccess: () => qc.invalidateQueries(["categories"]),
+    onError: () => toast.error("Error al actualizar la categoría"),
+  });
+
   const availabilityMutation = useMutation({
     mutationFn: ({ id, available }) => toggleAvailability(id, available),
     onSuccess: () => qc.invalidateQueries(["categories"]),
@@ -97,8 +103,15 @@ export default function MenuManagerPage() {
         <div className="space-y-6">
           {categories.map((cat) => (
             <div key={cat.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="bg-gray-50 px-5 py-3 border-b">
+              <div className="bg-gray-50 px-5 py-3 border-b flex items-center justify-between">
                 <h3 className="font-semibold text-gray-800">{cat.name}</h3>
+                <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer select-none"
+                  title="Permite combinar dos gustos de esta categoría en una pizza, cobrando la mitad más cara">
+                  <input type="checkbox" checked={cat.allows_halves}
+                    onChange={(e) => halvesMutation.mutate({ id: cat.id, allows_halves: e.target.checked })}
+                    className="accent-orange-500" />
+                  Permite mitad y mitad
+                </label>
               </div>
               <div className="divide-y">
                 {cat.items.filter((i) => i.is_active).map((item) => (

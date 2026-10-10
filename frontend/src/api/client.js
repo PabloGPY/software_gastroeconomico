@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const client = axios.create({
-  baseURL: "http://localhost:8000/api/v1",
+  baseURL: `http://${window.location.hostname}:8001/api/v1`,
 });
 
 client.interceptors.request.use((config) => {
@@ -15,7 +15,8 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    // En el login un 401 es "credenciales incorrectas": no recargar, así se ve el error
+    if (err.response?.status === 401 && !err.config?.url?.includes("/auth/login")) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "/login";

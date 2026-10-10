@@ -12,6 +12,8 @@ class MenuCategory(Base):
     name: Mapped[str] = mapped_column(String(80), nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Permite pedir "mitad y mitad" combinando dos items de esta categoría (pizzas)
+    allows_halves: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     items: Mapped[list["MenuItem"]] = relationship(back_populates="category", order_by="MenuItem.sort_order")
 

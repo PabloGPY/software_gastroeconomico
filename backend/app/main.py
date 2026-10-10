@@ -4,11 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import auth, users, tables, reservations, menu, orders, payments, expenses, reports, websocket
 
-app = FastAPI(title="GastroPOS API", version="1.0.0", docs_url="/docs")
+app = FastAPI(title="Fooders API", version="1.0.0", docs_url="/docs")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=settings.CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,4 +30,4 @@ app.include_router(websocket.router)
 
 @app.get("/")
 async def root():
-    return {"message": "GastroPOS API v1.0", "docs": "/docs"}
+    return {"message": "Fooders API v1.0", "docs": "/docs"}

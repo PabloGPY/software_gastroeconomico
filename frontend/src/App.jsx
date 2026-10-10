@@ -9,6 +9,7 @@ import FloorMapPage from "./pages/tables/FloorMapPage";
 import ReservationsPage from "./pages/tables/ReservationsPage";
 import TableOrderPage from "./pages/orders/TableOrderPage";
 import KitchenDisplayPage from "./pages/orders/KitchenDisplayPage";
+import CounterPage from "./pages/orders/CounterPage";
 import CheckoutPage from "./pages/payments/CheckoutPage";
 import MenuManagerPage from "./pages/menu/MenuManagerPage";
 import ExpensesPage from "./pages/expenses/ExpensesPage";
@@ -55,6 +56,9 @@ export default function App() {
             } />
             <Route path="/order" element={
               <ProtectedRoute roles={["admin", "waiter"]}><FloorMapPage /></ProtectedRoute>
+            } />
+            <Route path="/counter" element={
+              <ProtectedRoute roles={["admin", "waiter", "cashier"]}><CounterPage /></ProtectedRoute>
             } />
             <Route path="/kitchen" element={
               <ProtectedRoute roles={["admin", "kitchen"]}><KitchenDisplayPage /></ProtectedRoute>

@@ -68,7 +68,8 @@ async def process_payment(
 
     subtotal = sum(Decimal(str(i.unit_price)) * i.quantity for i in order.items if i.status != "cancelled")
     discount_amount = subtotal * (data.discount_pct / Decimal("100"))
-    total = subtotal - discount_amount + data.tip_amount
+    delivery_fee = Decimal(str(order.delivery_fee or 0))
+    total = subtotal - discount_amount + data.tip_amount + delivery_fee
     change_given = None
     if data.cash_received is not None:
         change_given = data.cash_received - total
@@ -82,6 +83,7 @@ async def process_payment(
         discount_pct=data.discount_pct,
         discount_amount=discount_amount,
         tip_amount=data.tip_amount,
+        delivery_fee=delivery_fee,
         total=total,
         payment_method=data.payment_method,
         cash_received=data.cash_received,
@@ -99,10 +101,11 @@ async def process_payment(
     from datetime import datetime
     order.closed_at = datetime.utcnow()
 
-    table_result = await db.execute(select(Table).where(Table.id == order.table_id))
-    table = table_result.scalar_one_or_none()
-    if table:
-        table.status = "available"
+    if order.table_id is not None:
+        table_result = await db.execute(select(Table).where(Table.id == order.table_id))
+        table = table_result.scalar_one_or_none()
+        if table:
+            table.status = "available"
 
     await db.commit()
     result = await db.execute(

@@ -29,42 +29,73 @@ TABLES = [
     {"number": 8, "capacity": 4, "pos_x": 85, "pos_y": 55},
 ]
 
+# Menú de Fooders. sort_order define el orden de las solapas en la pantalla de pedidos.
 MENU = [
     {
-        "category": "Entradas",
+        "category": "Pizzas",
+        "sort_order": 1,
+        "allows_halves": True,
         "items": [
-            {"name": "Tabla de quesos", "price": 1800, "cost": 900, "description": "Quesos variados con dulce de membrillo"},
-            {"name": "Empanadas (x3)", "price": 1200, "cost": 500, "description": "Carne, humita o verdura"},
-            {"name": "Provoleta", "price": 1500, "cost": 600, "description": "Con chimichurri"},
+            {"name": "Muzzarella", "price": 3200, "cost": 1100, "description": "Grande, 8 porciones"},
+            {"name": "Napolitana", "price": 3600, "cost": 1300, "description": "Muzza, tomate en rodajas, ajo y perejil"},
+            {"name": "Fugazzeta", "price": 3700, "cost": 1300, "description": "Muzza y cebolla"},
+            {"name": "Jamón y morrones", "price": 3900, "cost": 1500, "description": "Muzza, jamón cocido y morrones asados"},
+            {"name": "Calabresa", "price": 3900, "cost": 1500, "description": "Muzza y longaniza calabresa"},
+            {"name": "Especial", "price": 4100, "cost": 1600, "description": "Jamón, morrones, huevo y aceitunas"},
         ]
     },
     {
-        "category": "Platos principales",
+        "category": "Pizzas gourmet",
+        "sort_order": 2,
+        "allows_halves": True,
         "items": [
-            {"name": "Bife de chorizo", "price": 4500, "cost": 2000, "description": "400g con guarnición"},
-            {"name": "Milanesa napolitana", "price": 3800, "cost": 1600, "description": "Con papas fritas"},
-            {"name": "Pasta del día", "price": 2800, "cost": 900, "description": "Consultar"},
-            {"name": "Pollo grillado", "price": 3200, "cost": 1200, "description": "Con ensalada"},
+            {"name": "Cuatro quesos", "price": 4500, "cost": 1900, "description": "Muzza, roquefort, provolone y parmesano"},
+            {"name": "Rúcula y crudo", "price": 4800, "cost": 2100, "description": "Jamón crudo, rúcula y parmesano"},
+            {"name": "Fooders", "price": 4900, "cost": 2000, "description": "La de la casa: panceta, cheddar, cebolla caramelizada"},
+        ]
+    },
+    {
+        "category": "Empanadas",
+        "sort_order": 3,
+        "items": [
+            {"name": "Empanada de carne", "price": 500, "cost": 200, "description": "Carne cortada a cuchillo"},
+            {"name": "Empanada de jamón y queso", "price": 500, "cost": 200, "description": None},
+            {"name": "Empanada de humita", "price": 500, "cost": 180, "description": None},
+            {"name": "Docena de empanadas", "price": 5400, "cost": 2200, "description": "12 a elección, aclarar gustos en la nota"},
+        ]
+    },
+    {
+        "category": "Fainá y extras",
+        "sort_order": 4,
+        "items": [
+            {"name": "Fainá", "price": 900, "cost": 250, "description": "Porción para acompañar"},
+            {"name": "Papas fritas", "price": 1500, "cost": 500, "description": None},
         ]
     },
     {
         "category": "Bebidas",
+        "sort_order": 5,
         "items": [
             {"name": "Agua mineral", "price": 600, "cost": 150, "description": "500ml"},
             {"name": "Gaseosa", "price": 800, "cost": 200, "description": "Lata 350ml"},
-            {"name": "Vino por copa", "price": 1200, "cost": 350, "description": "Malbec o Chardonnay"},
+            {"name": "Gaseosa 1.5L", "price": 1600, "cost": 600, "description": "Ideal para llevar"},
             {"name": "Cerveza artesanal", "price": 1400, "cost": 400, "description": "Pinta 500ml"},
+            {"name": "Cerveza 1L", "price": 2000, "cost": 900, "description": "Porrón litro"},
         ]
     },
     {
         "category": "Postres",
+        "sort_order": 6,
         "items": [
-            {"name": "Tiramisú", "price": 1800, "cost": 600, "description": "Casero"},
             {"name": "Flan con dulce", "price": 1200, "cost": 350, "description": "Flan con dulce de leche"},
             {"name": "Helado (3 bochas)", "price": 1400, "cost": 400, "description": "Varios gustos"},
         ]
     },
 ]
+
+# Categorías del menú de demostración original que no aplican a una pizzería.
+# Se desactivan (no se borran) para conservar el historial de pedidos.
+LEGACY_CATEGORIES = ["Entradas", "Platos principales"]
 
 
 async def seed():
@@ -101,8 +132,11 @@ async def seed():
             if not category:
                 category = MenuCategory(name=section["category"])
                 db.add(category)
-                await db.flush()
                 print(f"  OK Categoría: {section['category']}")
+            category.sort_order = section["sort_order"]
+            category.allows_halves = section.get("allows_halves", False)
+            category.is_active = True
+            await db.flush()
 
             for item_data in section["items"]:
                 item_result = await db.execute(
@@ -111,6 +145,13 @@ async def seed():
                 if not item_result.scalar_one_or_none():
                     db.add(MenuItem(category_id=category.id, **item_data))
                     print(f"    OK Item: {item_data['name']}")
+
+        for name in LEGACY_CATEGORIES:
+            cat_result = await db.execute(select(MenuCategory).where(MenuCategory.name == name))
+            legacy = cat_result.scalar_one_or_none()
+            if legacy and legacy.is_active:
+                legacy.is_active = False
+                print(f"  - Categoría desactivada: {name}")
 
         await db.commit()
         print("\n[OK] Seed completado exitosamente.")

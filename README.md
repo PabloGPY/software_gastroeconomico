@@ -1,4 +1,4 @@
-# GastroPOS — Sistema de Gestión Gastronómica
+# Fooders — Sistema de gestión para pizzería
 
 ## Requisitos previos
 
@@ -73,8 +73,8 @@ Usuarios creados por el seed:
 ```bash
 # Dentro de backend/ con el venv activado
 python run.py
-# → API corriendo en http://localhost:8000
-# → Documentación en http://localhost:8000/docs
+# → API corriendo en http://localhost:8001
+# → Documentación en http://localhost:8001/docs
 ```
 
 ---

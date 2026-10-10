@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getSummary, getSales, getBestSellers, getPaymentMethods } from "../../api/reports";
+import { getSummary, getSales, getBestSellers, getPaymentMethods, getOrderTypes } from "../../api/reports";
+import { ORDER_TYPE_LABELS } from "../../utils/orders";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import AppLayout from "../../components/layout/AppLayout";
 import { format, startOfMonth, startOfWeek, subDays } from "date-fns";
@@ -51,6 +52,12 @@ export default function ReportsPage() {
     queryKey: ["payment-methods", from, to],
     queryFn: () => getPaymentMethods(params).then((r) => r.data),
   });
+
+  const { data: orderTypes = [] } = useQuery({
+    queryKey: ["order-types", from, to],
+    queryFn: () => getOrderTypes(params).then((r) => r.data),
+  });
+  const channelsTotal = orderTypes.reduce((sum, c) => sum + c.total, 0);
 
   const fmt = (n) => `$${Number(n || 0).toLocaleString("es-AR", { minimumFractionDigits: 0 })}`;
 
@@ -139,6 +146,31 @@ export default function ReportsPage() {
               </ResponsiveContainer>
             )}
           </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 mb-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Ventas por canal</h3>
+          {orderTypes.length === 0 ? (
+            <p className="text-gray-400 text-sm text-center py-4">Sin datos para el período</p>
+          ) : (
+            <div className="space-y-3">
+              {["dine_in", "takeaway", "delivery"].map((type) => {
+                const row = orderTypes.find((c) => c.order_type === type) || { count: 0, total: 0 };
+                const pct = channelsTotal > 0 ? (row.total / channelsTotal) * 100 : 0;
+                return (
+                  <div key={type}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-700">{ORDER_TYPE_LABELS[type]} <span className="text-gray-400">· {row.count} pedidos</span></span>
+                      <span className="font-medium text-gray-900">{fmt(row.total)} <span className="text-gray-400 font-normal">({pct.toFixed(0)}%)</span></span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-500 rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">

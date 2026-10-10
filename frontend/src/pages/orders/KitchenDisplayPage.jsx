@@ -5,7 +5,14 @@ import { getTables } from "../../api/tables";
 import AppLayout from "../../components/layout/AppLayout";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
-import { CheckCircle, Clock, ChefHat } from "lucide-react";
+import { CheckCircle, Clock, ChefHat, ShoppingBag, Bike } from "lucide-react";
+import { orderLabel, minutesSince } from "../../utils/orders";
+
+const TICKET_HEADER = {
+  dine_in: { className: "bg-gray-900", Icon: ChefHat },
+  takeaway: { className: "bg-amber-600", Icon: ShoppingBag },
+  delivery: { className: "bg-sky-700", Icon: Bike },
+};
 
 const ITEM_STATUS_COLORS = {
   pending: "bg-yellow-50 border-yellow-300",
@@ -25,16 +32,17 @@ function KitchenTicket({ order, table, onItemStatusChange }) {
   const kitchenItems = order.items.filter((i) => !["delivered", "cancelled"].includes(i.status));
   if (kitchenItems.length === 0) return null;
 
-  const minutesAgo = Math.floor((Date.now() - new Date(order.created_at)) / 60000);
+  const minutesAgo = minutesSince(order.created_at);
+  const header = TICKET_HEADER[order.order_type] || TICKET_HEADER.dine_in;
 
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-      <div className="bg-gray-900 text-white px-4 py-3 flex items-center justify-between">
+      <div className={`${header.className} text-white px-4 py-3 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
-          <ChefHat size={16} />
-          <span className="font-bold">Mesa {order.table_number || table?.number || order.table_id}</span>
+          <header.Icon size={16} />
+          <span className="font-bold">{orderLabel(order, table ? [table] : [])}</span>
         </div>
-        <div className="flex items-center gap-2 text-gray-300 text-xs">
+        <div className={`flex items-center gap-2 text-xs ${minutesAgo >= 20 ? "text-red-300 font-bold" : "text-gray-200"}`}>
           <Clock size={12} />
           <span>{minutesAgo}m</span>
         </div>
@@ -102,12 +110,12 @@ export default function KitchenDisplayPage() {
 
   useEffect(() => {
     if (!token) return;
-    const ws = new WebSocket(`ws://localhost:8000/ws/kitchen?token=${token}`);
+    const ws = new WebSocket(`ws://${window.location.hostname}:8001/ws/kitchen?token=${token}`);
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.event === "new_order") {
         qc.invalidateQueries(["active-orders"]);
-        toast.success(`Nuevo pedido — Mesa ${data.table_number}`);
+        toast.success(`Nuevo pedido — ${data.label}`);
       }
     };
     ws.onerror = () => console.warn("WS error, polling fallback active");

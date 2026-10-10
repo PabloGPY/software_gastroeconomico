@@ -12,8 +12,11 @@ build/
 .env
 *.local
 
-# Alembic
-backend/alembic/versions/*.py
+# Logs
+*.log
+
+# Documentos locales (contienen credenciales)
+*.docx
 
 # Node
 node_modules/

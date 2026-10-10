@@ -1,20 +1,43 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from typing import Literal
 
 
 class OrderItemCreate(BaseModel):
     menu_item_id: int
-    quantity: int
+    # Segunda mitad para pizzas "mitad y mitad"
+    half_menu_item_id: int | None = None
+    quantity: int = Field(gt=0)
     notes: str | None = None
 
 
 class OrderCreate(BaseModel):
-    table_id: int
+    order_type: Literal["dine_in", "takeaway", "delivery"] = "dine_in"
+    table_id: int | None = None
+    customer_name: str | None = None
+    customer_phone: str | None = None
+    delivery_address: str | None = None
+    delivery_fee: Decimal = Field(default=Decimal("0"), ge=0)
     notes: str | None = None
     items: list[OrderItemCreate]
+
+    @model_validator(mode="after")
+    def check_type_fields(self):
+        if self.order_type == "dine_in":
+            if self.table_id is None:
+                raise ValueError("Los pedidos en salón requieren una mesa")
+            self.delivery_fee = Decimal("0")
+        else:
+            self.table_id = None
+            if not (self.customer_name or "").strip():
+                raise ValueError("Ingresá el nombre del cliente")
+        if self.order_type == "delivery" and not (self.delivery_address or "").strip():
+            raise ValueError("Los pedidos de delivery requieren una dirección")
+        if self.order_type == "takeaway":
+            self.delivery_fee = Decimal("0")
+        return self
 
 
 class OrderItemStatusUpdate(BaseModel):
@@ -24,6 +47,7 @@ class OrderItemStatusUpdate(BaseModel):
 class OrderItemOut(BaseModel):
     id: uuid.UUID
     menu_item_id: int
+    half_menu_item_id: int | None = None
     menu_item_name: str | None = None
     quantity: int
     unit_price: Decimal
@@ -34,26 +58,16 @@ class OrderItemOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
-    @classmethod
-    def from_orm_with_name(cls, item) -> "OrderItemOut":
-        name = item.menu_item.name if item.menu_item else None
-        return cls(
-            id=item.id,
-            menu_item_id=item.menu_item_id,
-            menu_item_name=name,
-            quantity=item.quantity,
-            unit_price=item.unit_price,
-            notes=item.notes,
-            status=item.status,
-            sent_at=item.sent_at,
-            ready_at=item.ready_at,
-        )
-
 
 class OrderOut(BaseModel):
     id: uuid.UUID
-    table_id: int
+    order_type: str
+    table_id: int | None
     table_number: int | None = None
+    customer_name: str | None = None
+    customer_phone: str | None = None
+    delivery_address: str | None = None
+    delivery_fee: Decimal
     waiter_id: uuid.UUID | None
     status: str
     notes: str | None
